@@ -14,7 +14,6 @@ public class AnimalResponse {
         this.status = status;
     }
 
-
     public Animal getAnimal() {
         return animal;
     }

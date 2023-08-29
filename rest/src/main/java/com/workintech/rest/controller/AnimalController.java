@@ -29,6 +29,11 @@ public class AnimalController {
     public void init() {
         animalMap = new HashMap<>();
     }
+
+//    public AnimalController() {
+//        animalMap = new HashMap<>();
+//    }
+
     @GetMapping("/welcome")
     public String welcome() {
         return name + " - " + surname;
