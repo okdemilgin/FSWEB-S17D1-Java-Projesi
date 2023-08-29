@@ -1,6 +1,8 @@
 package com.workintech.rest.controller;
 
 import com.workintech.rest.entity.Animal;
+import com.workintech.rest.mapping.AnimalResponse;
+import com.workintech.rest.validation.AnimalValidation;
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
 import org.springframework.beans.factory.annotation.Value;
@@ -13,25 +15,23 @@ import java.util.Map;
 @RestController
 @RequestMapping("/workintech/animal")
 public class AnimalController {
+
     @Value("${instructor.name}")
     private String name;
+
     @Value("${instructor.surname}")
     private String surname;
 
     private Map<Integer, Animal> animalMap;
 
-    //   public AnimalController() {
-    //       animalMap = new HashMap<>();
-    //   }
-
+    //PostConstruct
     @PostConstruct
     public void init() {
         animalMap = new HashMap<>();
     }
-
     @GetMapping("/welcome")
     public String welcome() {
-        return name + " - " + surname + "say hi";
+        return name + " - " + surname;
     }
 
     @GetMapping("/")
@@ -40,52 +40,61 @@ public class AnimalController {
     }
 
     @GetMapping("/{id}")
-    public Animal get(@PathVariable int id) {
-        if (id < 0) {
-            // TODO id is not valid
+    public AnimalResponse get(@PathVariable int id) {
+        if (!AnimalValidation.isIdValid(id)) {
+            return new AnimalResponse(null, "Id is not valid", 400);
         }
-        if (!animalMap.containsKey(id)) {
-            // TODO map !contains id
+        if (!AnimalValidation.isMapContainsKey(animalMap, id)) {
+            return new AnimalResponse(null, "Animal is not exist", 400);
         }
-            return animalMap.get(id);
+
+        return new AnimalResponse(animalMap.get(id), "Success", 200);
     }
 
+    @PostMapping("/")
+    public AnimalResponse save(@RequestBody Animal animal) {
+        if (AnimalValidation.isMapContainsKey(animalMap, animal.getId())) {
+            return new AnimalResponse(null, "Animal is already exit", 400);
+        }
 
-    @PostMapping ("/")
-    public Animal save(@RequestBody Animal animal) {
-        if(animalMap.containsKey(animal.getId())) {
-            // TODO item already exist
+        if (!AnimalValidation.isAnimalCredentialsValid(animal)){
+            //TODO animal credentials are not valid
+            return new AnimalResponse(null, "Animal credentials are not valid", 400);
         }
-        if(animal.getId() < 0 || animal.getName() == null || animal.getName().isEmpty()){
-            // TODO animal credentials are not valid
-        }
+
         animalMap.put(animal.getId(), animal);
-        return animalMap.get(animal.getId());
+        return new AnimalResponse(animalMap.get(animal.getId()), "success", 201);
     }
-    @PutMapping ("/{id}")
-    public Animal update (@PathVariable int id, @RequestBody Animal animal) {
-        if(!animalMap.containsKey(id)) {
-            // TODO item is not exist
+
+    @PutMapping("/{id}")
+    public AnimalResponse update(@PathVariable int id, @RequestBody Animal animal){
+        if(!AnimalValidation.isMapContainsKey(animalMap, animal.getId())){
+            //TODO item is not exist
+            return new AnimalResponse(null, "Animal is not exist", 400);
         }
-        if(animal.getId() < 0 || animal.getName() == null || animal.getName().isEmpty()){
-            // TODO animal credentials are not valid
+        if (!AnimalValidation.isAnimalCredentialsValid(animal)){
+            //TODO animal credentials are not valid
+            return new AnimalResponse(null, "Animal credentials are not valid", 400);
         }
         animalMap.put(id, new Animal(id, animal.getName()));
-        return animalMap.get(id);
+        return new AnimalResponse(animalMap.get(id), "success", 200);
     }
+
     @DeleteMapping("/{id}")
-    public Animal delete(@PathVariable int id){
-        if(!animalMap.containsKey(id)){
-            // TODO: Animal not exist
+    public AnimalResponse delete(@PathVariable int id){
+        if(!AnimalValidation.isMapContainsKey(animalMap, id)){
+            //TODO: Animal not exist
+            return new AnimalResponse(null, "Animal is not exist", 400);
         }
         Animal foundAnimal = animalMap.get(id);
         animalMap.remove(id);
-        return foundAnimal;
-
+        return new AnimalResponse(foundAnimal, "Animal removed successfully", 200);
     }
+
+
     @PreDestroy
-    public void destroy(){
-        System.out.println("Animal controller has been destroyed");
+    public void destroy() {
+        System.out.println("Animal Controller has been destroyed");
     }
 
 }
